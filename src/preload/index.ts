@@ -19,7 +19,9 @@ const api = {
     ipcRenderer.on('pipeline:progress', handler)
     return () => ipcRenderer.off('pipeline:progress', handler)
   },
-  getPathForFile: (file: File): string => webUtils.getPathForFile(file)
+  getPathForFile: (file: File): string => webUtils.getPathForFile(file),
+  showInFinder: (filePath: string): Promise<void> =>
+    ipcRenderer.invoke('shell:showInFinder', filePath)
 }
 
 contextBridge.exposeInMainWorld('api', api)

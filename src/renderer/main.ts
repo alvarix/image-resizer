@@ -32,6 +32,11 @@ function hasEnabledPreset(): boolean {
 
 // ---- Preset sidebar ----
 function renderPresets(): void {
+  if (state.presets.length === 0) {
+    presetListEl.innerHTML = '<li class="preset-empty">No presets. Click + to add one.</li>'
+    renderRunBtn()
+    return
+  }
   presetListEl.innerHTML = state.presets
     .map(
       (p) => `
@@ -249,6 +254,11 @@ runBtn.addEventListener('click', async () => {
         pill.className = `status-pill ${item.status}`
         pill.textContent = item.preset
         pill.title = item.outPath ?? item.error ?? ''
+        if (item.status === 'ok' && item.outPath) {
+          const outPath = item.outPath
+          pill.style.cursor = 'pointer'
+          pill.addEventListener('click', () => window.api.showInFinder(outPath))
+        }
         row.appendChild(pill)
       }
       if (item.status === 'ok') processed++

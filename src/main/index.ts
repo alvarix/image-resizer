@@ -1,15 +1,21 @@
-import { app, BrowserWindow, ipcMain, dialog, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, nativeImage, shell } from 'electron'
 import { join } from 'path'
+import ElectronStore from 'electron-store'
 import { loadPresets, savePresets } from './store/presets'
 import { runPipeline } from './pipeline/run'
 import type { Preset } from '../shared/preset'
 
+const windowStore = new ElectronStore<{ bounds: { width: number; height: number; x?: number; y?: number } }>({
+  name: 'window',
+  defaults: { bounds: { width: 1000, height: 680 } }
+})
+
 let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
+  const saved = windowStore.get('bounds')
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 680,
+    ...saved,
     minWidth: 720,
     minHeight: 480,
     title: 'ImageResizer',
@@ -28,6 +34,10 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  mainWindow.on('close', () => {
+    if (mainWindow) windowStore.set('bounds', mainWindow.getBounds())
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -51,7 +61,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-// ----- IPC stubs (real implementations land in next phase) -----
+// ----- IPC handlers -----
 
 ipcMain.handle('dialog:openImages', async (): Promise<string[]> => {
   if (!mainWindow) return []
@@ -87,3 +97,7 @@ ipcMain.handle(
     }
   }
 )
+
+ipcMain.handle('shell:showInFinder', async (_e, filePath: string) => {
+  shell.showItemInFolder(filePath)
+})
