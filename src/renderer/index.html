@@ -14,16 +14,14 @@
       <aside class="sidebar">
         <header class="sidebar-header">
           <h2>Presets</h2>
-          <button id="add-preset" class="btn-icon" title="Add preset" disabled>+</button>
+          <button id="add-preset" class="btn-icon" title="Add preset">+</button>
         </header>
-        <ul id="preset-list" class="preset-list">
-          <li class="preset-item placeholder">PNG 4-color 1200</li>
-          <li class="preset-item placeholder">WebP 70 1200</li>
-        </ul>
-        <p class="sidebar-note">(Preset editor coming next)</p>
+        <ul id="preset-list" class="preset-list"></ul>
       </aside>
 
       <main class="main">
+        <div id="editor-panel" class="editor-panel" hidden></div>
+
         <section id="drop-zone" class="drop-zone">
           <div class="drop-inner">
             <div class="drop-icon">+</div>

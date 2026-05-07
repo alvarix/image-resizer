@@ -74,32 +74,35 @@ body {
 }
 
 .preset-item {
-  padding: 8px 10px;
+  padding: 7px 10px;
   border-radius: 6px;
   margin-bottom: 2px;
   cursor: pointer;
   user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .preset-item:hover {
   background: var(--bg-elev-2);
 }
 
-.preset-item.placeholder {
-  color: var(--text-dim);
-  cursor: default;
+.preset-item.selected {
+  background: rgba(74, 158, 255, 0.15);
 }
 
-.preset-item.placeholder:hover {
-  background: transparent;
+.preset-check {
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
-.sidebar-note {
-  margin: 0;
-  padding: 8px 12px 12px;
-  font-size: 11px;
-  color: var(--text-dim);
-  border-top: 1px solid var(--border);
+.preset-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .main {
@@ -264,4 +267,123 @@ body {
   color: var(--text-dim);
   font-size: 12px;
   margin-left: auto;
+}
+
+/* ---- Editor panel ---- */
+.editor-panel {
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
+  -webkit-app-region: no-drag;
+}
+
+.preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editor-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.field-label input,
+.field-label select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 5px 8px;
+  outline: none;
+  width: 100%;
+}
+
+.field-label input:focus,
+.field-label select:focus {
+  border-color: var(--accent);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 11px;
+  min-height: 14px;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-row input[type="range"] {
+  flex: 1;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.range-row span {
+  width: 28px;
+  text-align: right;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 6px;
+  padding-top: 4px;
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.btn-danger:hover {
+  background: rgba(255, 94, 94, 0.12);
+}
+
+/* ---- Pipeline progress pills ---- */
+.file-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.status-pill {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.status-pill.ok {
+  background: rgba(50, 200, 100, 0.18);
+  color: #5dbb7a;
+}
+
+.status-pill.error {
+  background: rgba(255, 94, 94, 0.18);
+  color: var(--danger);
 }

@@ -1,52 +1,179 @@
 import './styles.css'
+import type { Preset, ProgressEvent } from '../shared/preset'
+import { openEditor } from './preset-editor'
 
+// ---- DOM refs ----
 const dropZone = document.getElementById('drop-zone') as HTMLElement
-const fileList = document.getElementById('file-list') as HTMLElement
+const fileListEl = document.getElementById('file-list') as HTMLElement
 const pickBtn = document.getElementById('pick-files') as HTMLButtonElement
 const runBtn = document.getElementById('run') as HTMLButtonElement
 const clearBtn = document.getElementById('clear') as HTMLButtonElement
 const statusEl = document.getElementById('status') as HTMLElement
+const addPresetBtn = document.getElementById('add-preset') as HTMLButtonElement
+const presetListEl = document.getElementById('preset-list') as HTMLUListElement
 
-interface State {
+// ---- App state ----
+interface AppState {
   files: string[]
+  presets: Preset[]
+  selectedPresetId: string | null
 }
 
-const state: State = { files: [] }
+const state: AppState = { files: [], presets: [], selectedPresetId: null }
 
+// ---- Helpers ----
 function basename(p: string): string {
   return p.split('/').pop() ?? p
 }
 
-function render(): void {
+function hasEnabledPreset(): boolean {
+  return state.presets.some((p) => p.enabled)
+}
+
+// ---- Preset sidebar ----
+function renderPresets(): void {
+  presetListEl.innerHTML = state.presets
+    .map(
+      (p) => `
+    <li class="preset-item${state.selectedPresetId === p.id ? ' selected' : ''}" data-id="${p.id}">
+      <input type="checkbox" class="preset-check" data-id="${p.id}" ${p.enabled ? 'checked' : ''} />
+      <span class="preset-name">${p.name}</span>
+    </li>`
+    )
+    .join('')
+
+  presetListEl.querySelectorAll<HTMLInputElement>('.preset-check').forEach((cb) => {
+    cb.addEventListener('change', (e) => {
+      e.stopPropagation()
+      const id = cb.dataset.id!
+      const preset = state.presets.find((p) => p.id === id)
+      if (preset) {
+        preset.enabled = cb.checked
+        persistPresets()
+        renderRunBtn()
+      }
+    })
+  })
+
+  presetListEl.querySelectorAll<HTMLLIElement>('.preset-item').forEach((li) => {
+    li.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).classList.contains('preset-check')) return
+      const id = li.dataset.id!
+      state.selectedPresetId = id
+      renderPresets()
+      const preset = state.presets.find((p) => p.id === id)!
+      openEditor(preset, {
+        onSave: (updated) => {
+          state.presets = state.presets.map((p) => (p.id === updated.id ? updated : p))
+          state.selectedPresetId = null
+          persistPresets()
+          renderPresets()
+          renderRunBtn()
+        },
+        onDuplicate: (src) => {
+          const copy: Preset = {
+            ...src,
+            id: crypto.randomUUID(),
+            name: `${src.name} copy`
+          }
+          state.presets = [...state.presets, copy]
+          state.selectedPresetId = copy.id
+          persistPresets()
+          renderPresets()
+          openEditor(copy, editorCallbacks(copy.id))
+        },
+        onDelete: (id) => {
+          state.presets = state.presets.filter((p) => p.id !== id)
+          state.selectedPresetId = null
+          persistPresets()
+          renderPresets()
+          renderRunBtn()
+        },
+        onCancel: () => {
+          state.selectedPresetId = null
+          renderPresets()
+        }
+      })
+    })
+  })
+}
+
+function editorCallbacks(currentId: string) {
+  return {
+    onSave: (updated: Preset) => {
+      state.presets = state.presets.map((p) => (p.id === updated.id ? updated : p))
+      state.selectedPresetId = null
+      persistPresets()
+      renderPresets()
+      renderRunBtn()
+    },
+    onDuplicate: (src: Preset) => {
+      const copy: Preset = {
+        ...src,
+        id: crypto.randomUUID(),
+        name: `${src.name} copy`
+      }
+      state.presets = [...state.presets, copy]
+      state.selectedPresetId = copy.id
+      persistPresets()
+      renderPresets()
+      openEditor(copy, editorCallbacks(copy.id))
+    },
+    onDelete: (id: string) => {
+      state.presets = state.presets.filter((p) => p.id !== id)
+      state.selectedPresetId = null
+      persistPresets()
+      renderPresets()
+      renderRunBtn()
+    },
+    onCancel: () => {
+      state.selectedPresetId = null
+      renderPresets()
+    }
+  }
+}
+
+async function persistPresets(): Promise<void> {
+  await window.api.savePresets(state.presets)
+}
+
+// ---- File list ----
+function renderFiles(): void {
   if (state.files.length === 0) {
     dropZone.hidden = false
-    fileList.hidden = true
-    runBtn.disabled = true
+    fileListEl.hidden = true
     clearBtn.hidden = true
+    renderRunBtn()
     return
   }
   dropZone.hidden = true
-  fileList.hidden = false
-  runBtn.disabled = false
+  fileListEl.hidden = false
   clearBtn.hidden = false
-  fileList.innerHTML = state.files
+  fileListEl.innerHTML = state.files
     .map(
       (f) =>
-        `<div class="file-row"><span class="file-name">${basename(
-          f
-        )}</span><span class="file-path">${f}</span></div>`
+        `<div class="file-row" data-path="${f}">
+          <span class="file-name">${basename(f)}</span>
+          <span class="file-statuses"></span>
+        </div>`
     )
     .join('')
+  renderRunBtn()
+}
+
+function renderRunBtn(): void {
+  runBtn.disabled = state.files.length === 0 || !hasEnabledPreset()
 }
 
 function addFiles(paths: string[]): void {
   const fresh = paths.filter((p) => !state.files.includes(p))
   if (fresh.length) {
     state.files = [...state.files, ...fresh]
-    render()
+    renderFiles()
   }
 }
 
+// ---- File picker ----
 pickBtn.addEventListener('click', async () => {
   const paths = await window.api.openImages()
   if (paths.length) addFiles(paths)
@@ -55,10 +182,10 @@ pickBtn.addEventListener('click', async () => {
 clearBtn.addEventListener('click', () => {
   state.files = []
   statusEl.textContent = ''
-  render()
+  renderFiles()
 })
 
-// Drag and drop
+// ---- Drag and drop ----
 ;(['dragenter', 'dragover'] as const).forEach((evt) => {
   dropZone.addEventListener(evt, (e: Event) => {
     e.preventDefault()
@@ -74,17 +201,80 @@ dropZone.addEventListener('drop', (e: DragEvent) => {
   const paths = files.map((f) => window.api.getPathForFile(f)).filter(Boolean)
   if (paths.length) addFiles(paths)
 })
-
-// Prevent the browser from navigating when files are dropped outside the zone
 window.addEventListener('dragover', (e) => e.preventDefault())
 window.addEventListener('drop', (e) => e.preventDefault())
 
+// ---- Add preset ----
+addPresetBtn.addEventListener('click', () => {
+  const blank: Preset = {
+    id: crypto.randomUUID(),
+    name: 'New Preset',
+    maxLongestSide: 1200,
+    format: 'webp',
+    quality: 80,
+    enabled: true
+  }
+  state.presets = [...state.presets, blank]
+  state.selectedPresetId = blank.id
+  persistPresets()
+  renderPresets()
+  openEditor(blank, editorCallbacks(blank.id))
+})
+
+// ---- Run pipeline ----
 runBtn.addEventListener('click', async () => {
   statusEl.textContent = 'Running...'
   runBtn.disabled = true
-  const result = await window.api.runPipeline(state.files, [])
-  statusEl.textContent = result.message ?? (result.ok ? 'Done' : 'Failed')
+  clearBtn.disabled = true
+
+  const enabledPresets = state.presets.filter((p) => p.enabled)
+
+  // reset status pills
+  document.querySelectorAll<HTMLElement>('.file-statuses').forEach((el) => {
+    el.textContent = ''
+  })
+
+  let processed = 0
+  let errors = 0
+
+  const unsubscribe = window.api.onPipelineProgress((evt: ProgressEvent) => {
+    const e = evt as unknown as ProgressEvent
+    if ((e as { type: string }).type === 'item') {
+      const item = e as { type: 'item'; file: string; preset: string; status: 'ok' | 'error'; outPath?: string; error?: string }
+      const row = document.querySelector<HTMLElement>(
+        `.file-row[data-path="${CSS.escape(item.file)}"] .file-statuses`
+      )
+      if (row) {
+        const pill = document.createElement('span')
+        pill.className = `status-pill ${item.status}`
+        pill.textContent = item.preset
+        pill.title = item.outPath ?? item.error ?? ''
+        row.appendChild(pill)
+      }
+      if (item.status === 'ok') processed++
+      else errors++
+    }
+  })
+
+  const result = await window.api.runPipeline(state.files, enabledPresets)
+  unsubscribe()
+
+  if (result.ok) {
+    statusEl.textContent = `${processed} output${processed !== 1 ? 's' : ''} written${errors ? `, ${errors} error${errors !== 1 ? 's' : ''}` : ''}`
+  } else {
+    statusEl.textContent = result.message ?? 'Failed'
+  }
+
   runBtn.disabled = false
+  clearBtn.disabled = false
+  renderRunBtn()
 })
 
-render()
+// ---- Init ----
+async function init(): Promise<void> {
+  state.presets = await window.api.getPresets()
+  renderPresets()
+  renderFiles()
+}
+
+init()

@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, nativeImage } from 'electron'
 import { join } from 'path'
+import { loadPresets, savePresets } from './store/presets'
+import type { Preset } from '../shared/preset'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -65,12 +67,11 @@ ipcMain.handle('dialog:openImages', async (): Promise<string[]> => {
 })
 
 ipcMain.handle('presets:get', async () => {
-  // TODO: load from electron-store
-  return []
+  return loadPresets()
 })
 
-ipcMain.handle('presets:save', async (_e, _presets: unknown) => {
-  // TODO: save to electron-store
+ipcMain.handle('presets:save', async (_e, presets: Preset[]) => {
+  savePresets(presets)
   return true
 })
 
