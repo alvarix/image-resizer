@@ -1,0 +1,50 @@
+{
+  "name": "image-resizer",
+  "version": "0.1.0",
+  "description": "Resize and convert images using configurable presets",
+  "main": "out/main/index.js",
+  "author": "alvarix",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "build:mac": "electron-vite build && electron-builder --mac",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "sharp": "^0.33.0"
+  },
+  "build": {
+    "appId": "com.alvarix.imageresizer",
+    "productName": "ImageResizer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/node_modules/sharp/**",
+      "**/node_modules/@img/**"
+    ],
+    "mac": {
+      "target": [
+        "dir",
+        "dmg"
+      ],
+      "identity": null,
+      "category": "public.app-category.graphics-design"
+    }
+  }
+}
