@@ -39,6 +39,7 @@
       "**/node_modules/@img/**"
     ],
     "mac": {
+      "icon": "build/icon.icns",
       "target": [
         "dir",
         "dmg"
