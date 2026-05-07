@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, nativeImage } from 'electron'
 import { join } from 'path'
 import { loadPresets, savePresets } from './store/presets'
+import { runPipeline } from './pipeline/run'
 import type { Preset } from '../shared/preset'
 
 let mainWindow: BrowserWindow | null = null
@@ -77,8 +78,12 @@ ipcMain.handle('presets:save', async (_e, presets: Preset[]) => {
 
 ipcMain.handle(
   'pipeline:run',
-  async (_e, _files: string[], _presets: unknown[]) => {
-    // TODO: implement Sharp pipeline
-    return { ok: false, message: 'Pipeline not implemented yet' }
+  async (e, files: string[], presets: Preset[]) => {
+    try {
+      await runPipeline(files, presets, e.sender)
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : String(err) }
+    }
   }
 )
