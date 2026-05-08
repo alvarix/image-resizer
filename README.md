@@ -4,13 +4,15 @@ macOS desktop app for batch-resizing and re-encoding images using configurable p
 
 ## What it does
 
-Drop one or more images onto the window (or use the file picker). Select which presets to apply via the checkboxes in the sidebar. Click Run. Outputs are written next to each source file as `{originalname}-{presetname}.{ext}`. Click any green output pill to reveal the file in Finder.
+Drop one or more images onto the window (or use the file picker). Each file shows a thumbnail preview. Select which presets to apply via the checkboxes in the sidebar. Click Run. Outputs are written next to each source file as `{originalname}-{presetname}.{ext}`. Click any green output pill to reveal the file in Finder.
+
+The sidebar also shows a log of the last 10 runs (date, time, files × presets → outputs).
 
 Default presets on first launch:
 - **PNG 4-color 1200** — palette-quantized PNG, max longest side 1200 px
 - **WebP 70 1200** — lossy WebP quality 70, max longest side 1200 px
 
-You can add, edit, duplicate, and delete presets. Presets persist between launches.
+You can add, edit, duplicate, and delete presets. Presets and run history persist between launches.
 
 ## Develop
 
