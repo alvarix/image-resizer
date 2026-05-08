@@ -4,6 +4,11 @@ import type { Preset, ProgressEvent } from '../../shared/preset'
 import { encode } from './encode'
 import { outputPath } from './naming'
 
+export interface RunResult {
+  outputs: number
+  errors: number
+}
+
 /**
  * Run files × enabled presets through the Sharp encoder.
  * Emits ProgressEvents to the renderer via webContents.send.
@@ -12,12 +17,13 @@ import { outputPath } from './naming'
  * @param files - Absolute paths to source images
  * @param presets - Enabled presets to apply to every file
  * @param sender - WebContents to receive pipeline:progress events
+ * @returns Counts of successful outputs and errors
  */
 export async function runPipeline(
   files: string[],
   presets: Preset[],
   sender: WebContents
-): Promise<void> {
+): Promise<RunResult> {
   const total = files.length * presets.length
   sender.send('pipeline:progress', { type: 'start', total } satisfies ProgressEvent)
 
@@ -33,6 +39,9 @@ export async function runPipeline(
 
   // Process in fixed-size windows
   let idx = 0
+  let outputs = 0
+  let errors = 0
+
   async function runNext(): Promise<void> {
     while (idx < jobs.length) {
       const job = jobs[idx++]
@@ -40,6 +49,7 @@ export async function runPipeline(
       const out = outputPath(job.file, job.preset.name, ext)
       try {
         await encode(job.file, out, job.preset)
+        outputs++
         sender.send('pipeline:progress', {
           type: 'item',
           file: job.file,
@@ -48,6 +58,7 @@ export async function runPipeline(
           outPath: out
         } satisfies ProgressEvent)
       } catch (err) {
+        errors++
         sender.send('pipeline:progress', {
           type: 'item',
           file: job.file,
@@ -63,4 +74,5 @@ export async function runPipeline(
   await Promise.all(workers)
 
   sender.send('pipeline:progress', { type: 'done' } satisfies ProgressEvent)
+  return { outputs, errors }
 }

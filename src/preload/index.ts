@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { Preset } from '../shared/preset'
+import type { Preset, RunEntry } from '../shared/preset'
 
 const api = {
   openImages: (): Promise<string[]> => ipcRenderer.invoke('dialog:openImages'),
@@ -21,7 +21,11 @@ const api = {
   },
   getPathForFile: (file: File): string => webUtils.getPathForFile(file),
   showInFinder: (filePath: string): Promise<void> =>
-    ipcRenderer.invoke('shell:showInFinder', filePath)
+    ipcRenderer.invoke('shell:showInFinder', filePath),
+  getPreview: (filePath: string): Promise<string> =>
+    ipcRenderer.invoke('preview:get', filePath),
+  getRunLog: (): Promise<RunEntry[]> =>
+    ipcRenderer.invoke('runlog:get')
 }
 
 contextBridge.exposeInMainWorld('api', api)

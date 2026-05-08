@@ -1,7 +1,9 @@
 import { app, BrowserWindow, ipcMain, dialog, nativeImage, shell } from 'electron'
 import { join } from 'path'
+import sharp from 'sharp'
 import ElectronStore from 'electron-store'
 import { loadPresets, savePresets } from './store/presets'
+import { appendRun, getRecentRuns } from './store/runlog'
 import { runPipeline } from './pipeline/run'
 import type { Preset } from '../shared/preset'
 
@@ -90,7 +92,15 @@ ipcMain.handle(
   'pipeline:run',
   async (e, files: string[], presets: Preset[]) => {
     try {
-      await runPipeline(files, presets, e.sender)
+      const { outputs, errors } = await runPipeline(files, presets, e.sender)
+      appendRun({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        files: files.length,
+        presets: presets.length,
+        outputs,
+        errors
+      })
       return { ok: true }
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : String(err) }
@@ -98,6 +108,19 @@ ipcMain.handle(
   }
 )
 
+ipcMain.handle('runlog:get', async () => {
+  return getRecentRuns()
+})
+
 ipcMain.handle('shell:showInFinder', async (_e, filePath: string) => {
   shell.showItemInFolder(filePath)
+})
+
+ipcMain.handle('preview:get', async (_e, filePath: string): Promise<string> => {
+  const buf = await sharp(filePath)
+    .rotate()
+    .resize({ width: 96, height: 96, fit: 'cover' })
+    .jpeg({ quality: 70 })
+    .toBuffer()
+  return `data:image/jpeg;base64,${buf.toString('base64')}`
 })

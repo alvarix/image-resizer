@@ -1,5 +1,5 @@
 import './styles.css'
-import type { Preset, ProgressEvent } from '../shared/preset'
+import type { Preset, ProgressEvent, RunEntry } from '../shared/preset'
 import { openEditor } from './preset-editor'
 
 // ---- DOM refs ----
@@ -11,6 +11,7 @@ const clearBtn = document.getElementById('clear') as HTMLButtonElement
 const statusEl = document.getElementById('status') as HTMLElement
 const addPresetBtn = document.getElementById('add-preset') as HTMLButtonElement
 const presetListEl = document.getElementById('preset-list') as HTMLUListElement
+const runLogEl = document.getElementById('run-log') as HTMLUListElement
 
 // ---- App state ----
 interface AppState {
@@ -156,14 +157,32 @@ function renderFiles(): void {
   clearBtn.hidden = false
   fileListEl.innerHTML = state.files
     .map(
-      (f) =>
-        `<div class="file-row" data-path="${f}">
-          <span class="file-name">${basename(f)}</span>
-          <span class="file-statuses"></span>
+      (f, i) =>
+        `<div class="file-row" data-idx="${i}">
+          <img class="file-thumb" src="" alt="" aria-hidden="true" />
+          <div class="file-info">
+            <span class="file-name">${basename(f)}</span>
+            <span class="file-statuses"></span>
+          </div>
         </div>`
     )
     .join('')
   renderRunBtn()
+  loadPreviews()
+}
+
+async function loadPreviews(): Promise<void> {
+  await Promise.all(
+    state.files.map(async (f, i) => {
+      try {
+        const dataUrl = await window.api.getPreview(f)
+        const img = fileListEl.querySelector<HTMLImageElement>(`.file-row[data-idx="${i}"] .file-thumb`)
+        if (img) img.src = dataUrl
+      } catch {
+        // silently skip unreadable files; thumb stays blank
+      }
+    })
+  )
 }
 
 function renderRunBtn(): void {
@@ -246,10 +265,11 @@ runBtn.addEventListener('click', async () => {
     const e = evt as unknown as ProgressEvent
     if ((e as { type: string }).type === 'item') {
       const item = e as { type: 'item'; file: string; preset: string; status: 'ok' | 'error'; outPath?: string; error?: string }
-      const row = document.querySelector<HTMLElement>(
-        `.file-row[data-path="${CSS.escape(item.file)}"] .file-statuses`
-      )
-      if (row) {
+      const fileIdx = state.files.indexOf(item.file)
+      const statusEl2 = fileIdx >= 0
+        ? fileListEl.querySelector<HTMLElement>(`.file-row[data-idx="${fileIdx}"] .file-statuses`)
+        : null
+      if (statusEl2) {
         const pill = document.createElement('span')
         pill.className = `status-pill ${item.status}`
         pill.textContent = item.preset
@@ -259,7 +279,7 @@ runBtn.addEventListener('click', async () => {
           pill.style.cursor = 'pointer'
           pill.addEventListener('click', () => window.api.showInFinder(outPath))
         }
-        row.appendChild(pill)
+        statusEl2.appendChild(pill)
       }
       if (item.status === 'ok') processed++
       else errors++
@@ -278,13 +298,33 @@ runBtn.addEventListener('click', async () => {
   runBtn.disabled = false
   clearBtn.disabled = false
   renderRunBtn()
+  await renderRunLog()
 })
+
+// ---- Run log ----
+function formatRunEntry(r: RunEntry): string {
+  const d = new Date(r.timestamp)
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  const summary = `${r.files} file${r.files !== 1 ? 's' : ''} × ${r.presets} preset${r.presets !== 1 ? 's' : ''} → ${r.outputs} out${r.errors ? `, ${r.errors} err` : ''}`
+  return `<li class="run-entry"><span class="run-time">${date} ${time}</span><span class="run-summary">${summary}</span></li>`
+}
+
+async function renderRunLog(): Promise<void> {
+  const runs: RunEntry[] = await window.api.getRunLog()
+  if (runs.length === 0) {
+    runLogEl.innerHTML = '<li class="run-empty">No runs yet</li>'
+    return
+  }
+  runLogEl.innerHTML = runs.map(formatRunEntry).join('')
+}
 
 // ---- Init ----
 async function init(): Promise<void> {
   state.presets = await window.api.getPresets()
   renderPresets()
   renderFiles()
+  await renderRunLog()
 }
 
 init()

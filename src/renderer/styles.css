@@ -175,18 +175,31 @@ body {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--bg-elev-2);
+  flex-shrink: 0;
+}
+
+.file-info {
+  display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .file-name {
   font-weight: 500;
-}
-
-.file-path {
-  font-family: ui-monospace, SFMono-Regular, monospace;
-  font-size: 11px;
-  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .run-bar {
@@ -274,6 +287,58 @@ body {
   color: var(--text-dim);
   font-size: 12px;
   margin-left: auto;
+}
+
+/* ---- Run log ---- */
+.runlog-section {
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.runlog-header {
+  padding: 6px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.run-log {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.run-entry {
+  padding: 5px 6px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.run-entry:hover {
+  background: var(--bg-elev-2);
+}
+
+.run-time {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.run-summary {
+  font-size: 11px;
+  color: var(--text);
+}
+
+.run-empty {
+  list-style: none;
+  padding: 6px 6px;
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 /* ---- Editor panel ---- */

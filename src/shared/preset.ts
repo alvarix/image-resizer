@@ -12,6 +12,15 @@ export interface Preset {
   enabled: boolean
 }
 
+export interface RunEntry {
+  id: string
+  timestamp: number
+  files: number
+  presets: number
+  outputs: number
+  errors: number
+}
+
 export type ProgressEvent =
   | { type: 'start'; total: number }
   | { type: 'item'; file: string; preset: string; status: 'ok' | 'error'; error?: string; outPath?: string }
