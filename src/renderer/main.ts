@@ -164,9 +164,19 @@ function renderFiles(): void {
             <span class="file-name">${basename(f)}</span>
             <span class="file-statuses"></span>
           </div>
+          <button class="file-remove" data-idx="${i}" title="Remove">&times;</button>
         </div>`
     )
     .join('')
+
+  fileListEl.querySelectorAll<HTMLButtonElement>('.file-remove').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.idx)
+      state.files = state.files.filter((_, i) => i !== idx)
+      renderFiles()
+    })
+  })
+
   renderRunBtn()
   loadPreviews()
 }

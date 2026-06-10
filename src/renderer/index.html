@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     />
     <title>ImageResizer</title>
     <link rel="stylesheet" href="./styles.css" />
@@ -27,6 +27,12 @@
       </aside>
 
       <main class="main">
+        <footer class="run-bar">
+          <button id="run" class="btn-primary" disabled>Run</button>
+          <button id="clear" class="btn-secondary" hidden>Remove All</button>
+          <span id="status" class="status"></span>
+        </footer>
+
         <div id="editor-panel" class="editor-panel" hidden></div>
 
         <section id="drop-zone" class="drop-zone">
@@ -40,12 +46,6 @@
         </section>
 
         <section id="file-list" class="file-list" hidden></section>
-
-        <footer class="run-bar">
-          <button id="run" class="btn-primary" disabled>Run</button>
-          <button id="clear" class="btn-secondary" hidden>Clear</button>
-          <span id="status" class="status"></span>
-        </footer>
       </main>
     </div>
 
