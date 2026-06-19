@@ -74,14 +74,13 @@ body {
 }
 
 .preset-item {
-  padding: 7px 10px;
+  padding: 6px 10px;
   border-radius: 6px;
   margin-bottom: 2px;
-  cursor: pointer;
   user-select: none;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .preset-item:hover {
@@ -90,6 +89,13 @@ body {
 
 .preset-item.selected {
   background: rgba(74, 158, 255, 0.15);
+}
+
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
 .preset-check {
@@ -103,6 +109,49 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.preset-params {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 24px;
+}
+
+.preset-params input[type="number"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 1px 4px;
+  width: 48px;
+  outline: none;
+}
+
+.preset-params input[type="number"]:focus {
+  border-color: var(--accent);
+}
+
+.preset-params input[type="range"] {
+  accent-color: var(--accent);
+  margin: 0;
+  flex: 1;
+  min-width: 60px;
+}
+
+.preset-params .param-unit {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.preset-params .param-val {
+  font-size: 10px;
+  color: var(--text-dim);
+  width: 22px;
+  text-align: right;
 }
 
 .preset-empty {

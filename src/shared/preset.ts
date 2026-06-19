@@ -26,6 +26,18 @@ export type ProgressEvent =
   | { type: 'item'; file: string; preset: string; status: 'ok' | 'error'; error?: string; outPath?: string }
   | { type: 'done' }
 
+export interface DefaultSettings {
+  maxLongestSide: number
+  pngColors: number
+  quality: number
+}
+
+export const DEFAULT_SETTINGS: DefaultSettings = {
+  maxLongestSide: 1200,
+  pngColors: 4,
+  quality: 80
+}
+
 export const DEFAULT_PRESETS: Preset[] = [
   {
     id: 'default-png',

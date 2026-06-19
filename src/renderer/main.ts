@@ -1,5 +1,6 @@
 import './styles.css'
 import type { Preset, ProgressEvent, RunEntry } from '../shared/preset'
+import { DEFAULT_SETTINGS } from '../shared/preset'
 import { openEditor } from './preset-editor'
 
 // ---- DOM refs ----
@@ -39,13 +40,7 @@ function renderPresets(): void {
     return
   }
   presetListEl.innerHTML = state.presets
-    .map(
-      (p) => `
-    <li class="preset-item${state.selectedPresetId === p.id ? ' selected' : ''}" data-id="${p.id}">
-      <input type="checkbox" class="preset-check" data-id="${p.id}" ${p.enabled ? 'checked' : ''} />
-      <span class="preset-name">${p.name}</span>
-    </li>`
-    )
+    .map((p) => buildPresetItem(p))
     .join('')
 
   presetListEl.querySelectorAll<HTMLInputElement>('.preset-check').forEach((cb) => {
@@ -61,9 +56,55 @@ function renderPresets(): void {
     })
   })
 
+  // Inline param inputs: update preset and persist on change
+  presetListEl.querySelectorAll<HTMLInputElement>('.param-size').forEach((inp) => {
+    inp.addEventListener('change', () => {
+      const id = (inp.closest('[data-id]') as HTMLElement).dataset.id!
+      const preset = state.presets.find((p) => p.id === id)
+      if (preset) {
+        const val = parseInt(inp.value, 10)
+        preset.maxLongestSide = Math.max(1, Math.min(20000, isNaN(val) ? 1200 : val))
+        inp.value = String(preset.maxLongestSide)
+        persistPresets()
+      }
+    })
+  })
+
+  presetListEl.querySelectorAll<HTMLInputElement>('.param-colors').forEach((inp) => {
+    inp.addEventListener('change', () => {
+      const id = (inp.closest('[data-id]') as HTMLElement).dataset.id!
+      const preset = state.presets.find((p) => p.id === id)
+      if (preset) {
+        const val = parseInt(inp.value, 10)
+        preset.pngColors = Math.max(2, Math.min(256, isNaN(val) ? 4 : val))
+        inp.value = String(preset.pngColors)
+        persistPresets()
+      }
+    })
+  })
+
+  presetListEl.querySelectorAll<HTMLInputElement>('.param-quality').forEach((inp) => {
+    inp.addEventListener('input', () => {
+      const parent = inp.closest('[data-id]') as HTMLElement
+      const valEl = parent.querySelector('.param-val') as HTMLElement
+      if (valEl) valEl.textContent = inp.value
+    })
+    inp.addEventListener('change', () => {
+      const id = (inp.closest('[data-id]') as HTMLElement).dataset.id!
+      const preset = state.presets.find((p) => p.id === id)
+      if (preset) {
+        preset.quality = Math.max(1, Math.min(100, parseInt(inp.value, 10) || 80))
+        persistPresets()
+      }
+    })
+  })
+
+  // Click preset row to open full editor
   presetListEl.querySelectorAll<HTMLLIElement>('.preset-item').forEach((li) => {
     li.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).classList.contains('preset-check')) return
+      const target = e.target as HTMLElement
+      if (target.closest('input:not(.preset-check)')) return
+      if (target.classList.contains('preset-check')) return
       const id = li.dataset.id!
       state.selectedPresetId = id
       renderPresets()
@@ -102,6 +143,38 @@ function renderPresets(): void {
       })
     })
   })
+}
+
+/** Build HTML for a single preset item with inline editable params */
+function buildPresetItem(p: Preset): string {
+  const sel = state.selectedPresetId === p.id ? ' selected' : ''
+  let params = ''
+
+  if (p.format === 'png') {
+    params = `
+        <div class="preset-params">
+          <input class="param-size" type="number" min="1" max="20000" value="${p.maxLongestSide}" />
+          <span class="param-unit">px</span>
+          <input class="param-colors" type="number" min="2" max="256" value="${p.pngColors ?? 4}" />
+          <span class="param-unit">colors</span>
+        </div>`
+  } else {
+    params = `
+        <div class="preset-params">
+          <input class="param-size" type="number" min="1" max="20000" value="${p.maxLongestSide}" />
+          <span class="param-unit">px</span>
+          <input class="param-quality" type="range" min="1" max="100" value="${p.quality ?? 80}" />
+          <span class="param-val">${p.quality ?? 80}</span>
+        </div>`
+  }
+
+  return `
+    <li class="preset-item${sel}" data-id="${p.id}">
+      <div class="preset-row">
+        <input type="checkbox" class="preset-check" data-id="${p.id}" ${p.enabled ? 'checked' : ''} />
+        <span class="preset-name">${escHtml(p.name)}</span>
+      </div>${params}
+    </li>`
 }
 
 function editorCallbacks(currentId: string) {
@@ -243,9 +316,9 @@ addPresetBtn.addEventListener('click', () => {
   const blank: Preset = {
     id: crypto.randomUUID(),
     name: 'New Preset',
-    maxLongestSide: 1200,
+    maxLongestSide: DEFAULT_SETTINGS.maxLongestSide,
     format: 'webp',
-    quality: 80,
+    quality: DEFAULT_SETTINGS.quality,
     enabled: true
   }
   state.presets = [...state.presets, blank]
@@ -335,6 +408,10 @@ async function init(): Promise<void> {
   renderPresets()
   renderFiles()
   await renderRunLog()
+}
+
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 init()
