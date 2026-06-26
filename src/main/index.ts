@@ -5,7 +5,7 @@ import ElectronStore from 'electron-store'
 import { loadPresets, savePresets } from './store/presets'
 import { appendRun, getRecentRuns } from './store/runlog'
 import { runPipeline } from './pipeline/run'
-import type { Preset } from '../shared/preset'
+import { SUPPORTED_EXTENSIONS, SUPPORTED_EXTENSIONS_RE, type Preset } from '../shared/preset'
 
 const windowStore = new ElectronStore<{ bounds: { width: number; height: number; x?: number; y?: number } }>({
   name: 'window',
@@ -13,6 +13,47 @@ const windowStore = new ElectronStore<{ bounds: { width: number; height: number;
 })
 
 let mainWindow: BrowserWindow | null = null
+
+/** Files dropped on the Dock icon before the window/renderer was ready */
+const pendingDropFiles: string[] = []
+
+/** Whether the renderer has signaled it is mounted and listening */
+let rendererReady = false
+
+/**
+ * Bring the main window to the front, restoring it if minimized.
+ */
+function focusMainWindow(): void {
+  if (!mainWindow) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.focus()
+}
+
+/**
+ * Forward file paths to the renderer, or buffer them if not ready.
+ * Filters out unsupported extensions and notifies the renderer of skipped files.
+ */
+function forwardOrBuffer(files: string[]): void {
+  const supported: string[] = []
+  const unsupported: string[] = []
+  for (const f of files) {
+    if (SUPPORTED_EXTENSIONS_RE.test(f)) {
+      supported.push(f)
+    } else {
+      unsupported.push(f)
+    }
+  }
+  if (unsupported.length && mainWindow && rendererReady) {
+    mainWindow.webContents.send('unsupported:files', unsupported)
+  }
+  if (supported.length) {
+    if (rendererReady && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('dropped:onIcon', supported)
+    } else {
+      pendingDropFiles.push(...supported)
+    }
+  }
+}
 
 function createWindow(): void {
   const saved = windowStore.get('bounds')
@@ -46,6 +87,30 @@ function createWindow(): void {
   })
 }
 
+// ---- Single-instance lock (macOS: routes second activation to this instance) ----
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (_event: Electron.Event, argv: string[]) => {
+    // Windows / Linux: file paths arrive in argv; filter Electron flags
+    const files = argv.filter((a) => !a.startsWith('-') && !a.includes('node_modules'))
+    if (files.length) forwardOrBuffer(files)
+    focusMainWindow()
+  })
+}
+
+/**
+ * Handle files dropped on the Dock icon or opened via Finder.
+ */
+function onOpenFile(event: Electron.Event, filePath: string): void {
+  event.preventDefault()
+  forwardOrBuffer([filePath])
+  focusMainWindow()
+}
+
+app.on('open-file', onOpenFile)
+
 app.whenReady().then(() => {
   if (process.platform === 'darwin' && app.dock) {
     const iconPath = join(__dirname, '../../build/icon.png')
@@ -54,8 +119,17 @@ app.whenReady().then(() => {
 
   createWindow()
 
+  // Renderer signals it is mounted and listening — flush buffered files
+  ipcMain.on('renderer:ready', () => {
+    rendererReady = true
+    if (pendingDropFiles.length > 0 && mainWindow) {
+      mainWindow.webContents.send('dropped:onIcon', pendingDropFiles.splice(0))
+    }
+  })
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    else focusMainWindow()
   })
 })
 
@@ -72,7 +146,7 @@ ipcMain.handle('dialog:openImages', async (): Promise<string[]> => {
     filters: [
       {
         name: 'Images',
-        extensions: ['png', 'jpg', 'jpeg', 'webp', 'avif', 'heic', 'heif', 'tif', 'tiff', 'gif']
+        extensions: SUPPORTED_EXTENSIONS
       }
     ]
   })

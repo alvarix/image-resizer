@@ -1,5 +1,6 @@
 import './styles.css'
 import type { Preset, ProgressEvent, RunEntry } from '../shared/preset'
+import { SUPPORTED_EXTENSIONS_RE } from '../shared/preset'
 import { DEFAULT_SETTINGS } from '../shared/preset'
 import { openEditor } from './preset-editor'
 
@@ -273,7 +274,9 @@ function renderRunBtn(): void {
 }
 
 function addFiles(paths: string[]): void {
-  const fresh = paths.filter((p) => !state.files.includes(p))
+  const fresh = paths
+    .filter((p) => !state.files.includes(p))
+    .filter((p) => SUPPORTED_EXTENSIONS_RE.test(p))
   if (fresh.length) {
     state.files = [...state.files, ...fresh]
     renderFiles()
@@ -404,6 +407,20 @@ async function renderRunLog(): Promise<void> {
 
 // ---- Init ----
 async function init(): Promise<void> {
+  // Register icon-drop listener BEFORE any async work.
+  // Closes a race where early-flushed files could be silently lost.
+  window.api.onDroppedOnIcon((paths) => {
+    addFiles(paths)
+  })
+
+  window.api.onUnsupportedFiles((paths) => {
+    const names = paths.map((p) => p.split('/').pop() ?? p).join(', ')
+    statusEl.textContent = `Skipped unsupported file${paths.length > 1 ? 's' : ''}: ${names}`
+  })
+
+  // Signal main process that the renderer is mounted and listening
+  window.api.notifyReady()
+
   state.presets = await window.api.getPresets()
   renderPresets()
   renderFiles()

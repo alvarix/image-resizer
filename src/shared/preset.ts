@@ -56,3 +56,9 @@ export const DEFAULT_PRESETS: Preset[] = [
     enabled: true
   }
 ]
+
+/** Canonical list of supported image extensions */
+export const SUPPORTED_EXTENSIONS: string[] = ['png', 'jpg', 'jpeg', 'webp', 'avif', 'heic', 'heif', 'tif', 'tiff', 'gif']
+
+/** Regex matching supported image file extensions (case-insensitive) */
+export const SUPPORTED_EXTENSIONS_RE = /\.(png|jpe?g|webp|avif|heic|heif|tiff?|gif)$/i

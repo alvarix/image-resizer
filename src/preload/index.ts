@@ -25,7 +25,18 @@ const api = {
   getPreview: (filePath: string): Promise<string> =>
     ipcRenderer.invoke('preview:get', filePath),
   getRunLog: (): Promise<RunEntry[]> =>
-    ipcRenderer.invoke('runlog:get')
+    ipcRenderer.invoke('runlog:get'),
+  onDroppedOnIcon: (cb: (paths: string[]) => void): (() => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, paths: string[]): void => cb(paths)
+    ipcRenderer.on('dropped:onIcon', handler)
+    return () => ipcRenderer.off('dropped:onIcon', handler)
+  },
+  notifyReady: (): void => ipcRenderer.send('renderer:ready'),
+  onUnsupportedFiles: (cb: (paths: string[]) => void): (() => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, paths: string[]): void => cb(paths)
+    ipcRenderer.on('unsupported:files', handler)
+    return () => ipcRenderer.off('unsupported:files', handler)
+  }
 }
 
 contextBridge.exposeInMainWorld('api', api)
