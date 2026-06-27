@@ -2,6 +2,10 @@
 
 macOS desktop app for batch-resizing and re-encoding images using configurable presets.
 
+Mac binary:
+release/mac-arm64/ImageResizer.app 
+
+
 ## What it does
 
 Drop one or more images onto the window (or use the file picker). Each file shows a thumbnail preview. Select which presets to apply via the checkboxes in the sidebar. Click Run. Outputs are written next to each source file as `{originalname}-{presetname}.{ext}`. Click any green output pill to reveal the file in Finder.
