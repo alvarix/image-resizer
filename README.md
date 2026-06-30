@@ -20,7 +20,7 @@ You can add, edit, duplicate, and delete presets. Presets and run history persis
 
 
 ## Running the release
-### 🍏 Note for macOS Users ("App is damaged" error)
+### Note for macOS Users ("App is damaged" error)
 
 Because this app is not currently signed with a paid Apple Developer certificate, macOS Gatekeeper will block it upon download and show a misleading error stating **"App is damaged and can't be opened."**
 
