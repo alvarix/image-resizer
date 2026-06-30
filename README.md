@@ -18,6 +18,26 @@ Default presets on first launch:
 
 You can add, edit, duplicate, and delete presets. Presets and run history persist between launches.
 
+
+## Running the release
+### 🍏 Note for macOS Users ("App is damaged" error)
+
+Because this app is not currently signed with a paid Apple Developer certificate, macOS Gatekeeper will block it upon download and show a misleading error stating **"App is damaged and can't be opened."**
+
+To fix this and safely open the app, run a quick cleanup command in your Mac Terminal:
+
+1. Open your **Terminal** app (Press `Cmd + Space`, type "Terminal", and hit Enter).
+2. Copy and paste the following command, then press **Enter**:
+   ```bash
+   xattr -cr. /ImageResizer.app
+   ```
+   *(Be sure to replace `YOUR_APP_NAME.app` with the actual name of the app in your Applications folder).*
+
+You only need to run this command once. After that, the app will open normally like any other software!
+
+
+
+
 ## Develop
 
 ```bash
