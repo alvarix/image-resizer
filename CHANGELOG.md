@@ -3,6 +3,21 @@
 ## [Unreleased]
 
 ### Added
+
+- Auto-derived preset names — `derivePresetName()` generates descriptive names like "PNG 4c 1200" or "WEBP q80 1200" from preset settings; inline param changes auto-update the name
+- Output filename previews — each file row shows predicted output filenames (e.g. `→ photo-PNG 4c 1200.jpg`) for all enabled presets
+- Run log now displays which presets were used in each run
+
+### Changed
+
+- Inline preset parameter edits now also refresh the file list (output previews stay in sync)
+- `editorCallbacks()` extracted to a standalone function
+- `sharp` bumped from ^0.33.0 to ^0.35.3
+
+## [0.6.0]
+
+### Added
+
 - Dock icon file drop support — drag images onto the macOS Dock icon to open them in the app
 - `mac.fileAssociations` in electron-builder config registers the app as a handler for common image types
 - Single-instance lock prevents multiple app copies; `second-instance` forwarding for cross-platform
