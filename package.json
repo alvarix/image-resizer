@@ -24,10 +24,14 @@
   },
   "dependencies": {
     "electron-store": "^8.2.0",
-    "sharp": "^0.33.0"
+    "sharp": "^0.35.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["electron", "esbuild", "sharp"]
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild",
+      "sharp"
+    ]
   },
   "build": {
     "appId": "com.alvarix.imageresizer",
@@ -53,7 +57,18 @@
       "category": "public.app-category.graphics-design",
       "fileAssociations": [
         {
-          "ext": ["png", "jpg", "jpeg", "webp", "avif", "heic", "heif", "tif", "tiff", "gif"],
+          "ext": [
+            "png",
+            "jpg",
+            "jpeg",
+            "webp",
+            "avif",
+            "heic",
+            "heif",
+            "tif",
+            "tiff",
+            "gif"
+          ],
           "name": "Image",
           "role": "Viewer"
         }
