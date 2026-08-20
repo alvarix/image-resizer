@@ -26,6 +26,10 @@ const api = {
     ipcRenderer.invoke('preview:get', filePath),
   getRunLog: (): Promise<RunEntry[]> =>
     ipcRenderer.invoke('runlog:get'),
+  getVersion: (): Promise<string> =>
+    ipcRenderer.invoke('app:getVersion'),
+  openDoc: (which: 'readme' | 'changelog'): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('docs:open', which),
   onDroppedOnIcon: (cb: (paths: string[]) => void): (() => void) => {
     const handler = (_e: Electron.IpcRendererEvent, paths: string[]): void => cb(paths)
     ipcRenderer.on('dropped:onIcon', handler)

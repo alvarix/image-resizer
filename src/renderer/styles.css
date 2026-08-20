@@ -65,6 +65,44 @@ body {
 	color: var(--text-dim);
 }
 
+.app-header {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--border);
+}
+
+.app-title-row {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+}
+
+.app-name {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.app-version {
+	font-size: 10px;
+	color: var(--text-dim);
+}
+
+.app-links {
+	display: flex;
+	gap: 10px;
+}
+
+.app-links .btn-link {
+	font-size: 11px;
+	color: var(--text-dim);
+}
+
+.app-links .btn-link:hover {
+	color: var(--accent);
+}
+
 .preset-list {
 	list-style: none;
 	margin: 0;

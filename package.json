@@ -41,11 +41,15 @@
     },
     "files": [
       "out/**/*",
-      "package.json"
+      "package.json",
+      "README.md",
+      "CHANGELOG.md"
     ],
     "asarUnpack": [
       "**/node_modules/sharp/**",
-      "**/node_modules/@img/**"
+      "**/node_modules/@img/**",
+      "README.md",
+      "CHANGELOG.md"
     ],
     "mac": {
       "icon": "build/icon.icns",

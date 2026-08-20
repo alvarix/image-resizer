@@ -3,7 +3,6 @@ import type { Preset, ProgressEvent, RunEntry } from "../shared/preset";
 import {
 	SUPPORTED_EXTENSIONS_RE,
 	DEFAULT_SETTINGS,
-	derivePresetName,
 	outputExtension,
 } from "../shared/preset";
 import { openEditor } from "./preset-editor";
@@ -18,6 +17,18 @@ const statusEl = document.getElementById("status") as HTMLElement;
 const addPresetBtn = document.getElementById("add-preset") as HTMLButtonElement;
 const presetListEl = document.getElementById("preset-list") as HTMLUListElement;
 const runLogEl = document.getElementById("run-log") as HTMLUListElement;
+const versionEl = document.getElementById("app-version") as HTMLElement;
+const openReadmeBtn = document.getElementById("open-readme") as HTMLButtonElement;
+const openChangelogBtn = document.getElementById("open-changelog") as HTMLButtonElement;
+
+openReadmeBtn.addEventListener("click", async () => {
+	const res = await window.api.openDoc("readme");
+	if (!res.ok) statusEl.textContent = `Could not open README: ${res.error ?? "unknown error"}`;
+});
+openChangelogBtn.addEventListener("click", async () => {
+	const res = await window.api.openDoc("changelog");
+	if (!res.ok) statusEl.textContent = `Could not open CHANGELOG: ${res.error ?? "unknown error"}`;
+});
 
 // ---- App state ----
 interface AppState {
@@ -84,7 +95,6 @@ function renderPresets(): void {
 						1,
 						Math.min(20000, isNaN(val) ? 1200 : val),
 					);
-					preset.name = derivePresetName(preset);
 					inp.value = String(preset.maxLongestSide);
 					persistAndRefresh();
 				}
@@ -100,7 +110,6 @@ function renderPresets(): void {
 				if (preset) {
 					const val = parseInt(inp.value, 10);
 					preset.pngColors = Math.max(2, Math.min(256, isNaN(val) ? 4 : val));
-					preset.name = derivePresetName(preset);
 					inp.value = String(preset.pngColors);
 					persistAndRefresh();
 				}
@@ -123,7 +132,6 @@ function renderPresets(): void {
 						1,
 						Math.min(100, parseInt(inp.value, 10) || 80),
 					);
-					preset.name = derivePresetName(preset);
 					persistAndRefresh();
 				}
 			});
@@ -488,6 +496,9 @@ async function init(): Promise<void> {
 
 	// Signal main process that the renderer is mounted and listening
 	window.api.notifyReady();
+
+	const version = await window.api.getVersion();
+	versionEl.textContent = version ? `v${version}` : "";
 
 	state.presets = await window.api.getPresets();
 	renderPresets();

@@ -12,6 +12,7 @@ import ElectronStore from "electron-store";
 import { loadPresets, savePresets } from "./store/presets";
 import { appendRun, getRecentRuns } from "./store/runlog";
 import { runPipeline } from "./pipeline/run";
+import { toSharpReadablePath } from "./pipeline/heic";
 import {
 	SUPPORTED_EXTENSIONS,
 	SUPPORTED_EXTENSIONS_RE,
@@ -45,6 +46,8 @@ function focusMainWindow(): void {
 /**
  * Forward file paths to the renderer, or buffer them if not ready.
  * Filters out unsupported extensions and notifies the renderer of skipped files.
+ * Paths without a file extension are silently dropped — they are likely
+ * system artifacts (e.g. the app binary) rather than user-intended drops.
  */
 function forwardOrBuffer(files: string[]): void {
 	const supported: string[] = [];
@@ -52,7 +55,9 @@ function forwardOrBuffer(files: string[]): void {
 	for (const f of files) {
 		if (SUPPORTED_EXTENSIONS_RE.test(f)) {
 			supported.push(f);
-		} else {
+		} else if (f.includes(".")) {
+			// Only report as unsupported if it looks like a file with an extension;
+			// silently drop paths without extensions (app binary, etc.).
 			unsupported.push(f);
 		}
 	}
@@ -106,9 +111,12 @@ if (!gotLock) {
 	app.quit();
 } else {
 	app.on("second-instance", (_event: Electron.Event, argv: string[]) => {
-		// Windows / Linux: file paths arrive in argv; filter Electron flags
+		// Windows / Linux: file paths arrive in argv; filter Electron flags.
+		// Also filter out the app's own executable path, which macOS includes
+		// when files are dropped on the Finder app icon (not the Dock).
+		const exePath = app.getPath("exe");
 		const files = argv.filter(
-			(a) => !a.startsWith("-") && !a.includes("node_modules"),
+			(a) => !a.startsWith("-") && !a.includes("node_modules") && a !== exePath,
 		);
 		if (files.length) forwardOrBuffer(files);
 		focusMainWindow();
@@ -209,11 +217,28 @@ ipcMain.handle("shell:showInFinder", async (_e, filePath: string) => {
 	shell.showItemInFolder(filePath);
 });
 
+ipcMain.handle("app:getVersion", () => {
+	return app.getVersion();
+});
+
+ipcMain.handle("docs:open", async (_e, which: "readme" | "changelog") => {
+	const file = which === "readme" ? "README.md" : "CHANGELOG.md";
+	// Packaged builds unpack bundled docs from the asar so the OS can open them.
+	const base = app.getAppPath().replace("app.asar", "app.asar.unpacked");
+	const error = await shell.openPath(join(base, file));
+	return error ? { ok: false, error } : { ok: true };
+});
+
 ipcMain.handle("preview:get", async (_e, filePath: string): Promise<string> => {
-	const buf = await sharp(filePath)
-		.rotate()
-		.resize({ width: 96, height: 96, fit: "cover" })
-		.jpeg({ quality: 70 })
-		.toBuffer();
-	return `data:image/jpeg;base64,${buf.toString("base64")}`;
+	const src = await toSharpReadablePath(filePath);
+	try {
+		const buf = await sharp(src.path)
+			.rotate()
+			.resize({ width: 96, height: 96, fit: "cover" })
+			.jpeg({ quality: 70 })
+			.toBuffer();
+		return `data:image/jpeg;base64,${buf.toString("base64")}`;
+	} finally {
+		await src.cleanup();
+	}
 });
