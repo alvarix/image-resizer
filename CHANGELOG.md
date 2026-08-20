@@ -4,15 +4,22 @@
 
 ### Added
 
-- Auto-derived preset names — `derivePresetName()` generates descriptive names like "PNG 4c 1200" or "WEBP q80 1200" from preset settings; inline param changes auto-update the name
-- Output filename previews — each file row shows predicted output filenames (e.g. `→ photo-PNG 4c 1200.jpg`) for all enabled presets
+- HEIC/HEIF input support — sources are pre-decoded to a lossless PNG via macOS `sips` before Sharp reads them (Sharp's prebuilt libvips has no HEVC decoder)
+- Output filename previews — each file row shows predicted output filenames for all enabled presets
 - Run log now displays which presets were used in each run
+- App header shows version number and links to open README / CHANGELOG
 
 ### Changed
 
+- Default presets renamed from "PNG 4-color 1200" / "WebP 70 1200" to "PNG" / "WebP"; preset store migrates to v3, renaming old auto-derived names to clean names on load
+- Output filenames and progress labels now use the preset's `name` field instead of auto-derived descriptive names (e.g. `photo-PNG.png` instead of `photo-PNG 4c 1200.png`); `derivePresetName()` retained only for store migration
 - Inline preset parameter edits now also refresh the file list (output previews stay in sync)
 - `editorCallbacks()` extracted to a standalone function
 - `sharp` bumped from ^0.33.0 to ^0.35.3
+
+### Fixed
+
+- Preset store name normalization now runs on every load (idempotent), so legacy "WebP 70 1200" names are corrected even when no version key was persisted
 
 ## [0.6.0]
 

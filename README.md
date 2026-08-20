@@ -13,8 +13,10 @@ Drop one or more images onto the window (or use the file picker). Each file show
 The sidebar also shows a log of the last 10 runs (date, time, files × presets → outputs).
 
 Default presets on first launch:
-- **PNG 4-color 1200** — palette-quantized PNG, max longest side 1200 px
-- **WebP 70 1200** — lossy WebP quality 70, max longest side 1200 px
+- **PNG** — palette-quantized PNG (4 colors), max longest side 1200 px
+- **WebP** — lossy WebP quality 70, max longest side 1200 px
+
+HEIC/HEIF files are supported as input (decoded via macOS `sips`); the app never produces HEIC output.
 
 You can add, edit, duplicate, and delete presets. Presets and run history persist between launches.
 
@@ -88,6 +90,7 @@ src/
       presets.ts       electron-store wrapper for preset persistence
     pipeline/
       encode.ts        Per-format Sharp calls
+      heic.ts          HEIC/HEIF pre-decode via macOS sips
       naming.ts        Collision-safe output filename builder
       run.ts           Concurrent orchestrator, emits progress events
   preload/
