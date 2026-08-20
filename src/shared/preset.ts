@@ -50,7 +50,7 @@ export const DEFAULT_SETTINGS: DefaultSettings = {
 export const DEFAULT_PRESETS: Preset[] = [
 	{
 		id: "default-png",
-		name: "PNG 4-color 1200",
+		name: "PNG",
 		maxLongestSide: 1200,
 		format: "png",
 		pngColors: 4,
@@ -58,7 +58,7 @@ export const DEFAULT_PRESETS: Preset[] = [
 	},
 	{
 		id: "default-webp",
-		name: "WebP 70 1200",
+		name: "WebP",
 		maxLongestSide: 1200,
 		format: "webp",
 		quality: 70,
